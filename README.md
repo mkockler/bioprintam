@@ -1,6 +1,9 @@
 # bioprintam
-BioPrintAM
-Our History file for GMU BENG 492 Senior Design Project!!!! 
+BioPrintAM - Senior Design Project @ GMU -- Affiliated with GMU's IABR
+
+
+
+Our History file
 Hardware: 
 Raspberry Pi 4B
 Arduino Nano
