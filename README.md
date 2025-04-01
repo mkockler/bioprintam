@@ -1,6 +1,9 @@
 # bioprintam
-BioPrintAM - Senior Design Project @ GMU -- Affiliated with GMU's IABR
-
+BioPrintAM - Senior Design Project @ GMU -- Affiliated with GMU Bioengineering
+Advisors:
+Dr. Remi Veneziano
+Dr. Quentin Sanders
+Randolph Warren
 
 
 Our History file
