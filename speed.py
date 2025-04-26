@@ -1,4 +1,5 @@
-## speed control menu
+# speed.py
+from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -14,10 +15,19 @@ class SpeedScreen(Screen):
         speeds = [str(v) for v in [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0]]
 
         for s in speeds:
-            layout.add_widget(Button(text=f"{s} mm/min"))
+            btn = Button(text=f"{s} mm/min")
+            btn.bind(on_press=self.select_speed)
+            layout.add_widget(btn)
 
-        def go_home(instance):
-            self.manager.current = 'home'
+        back_btn = Button(text="Back")
+        back_btn.bind(on_press=self.go_back)
+        layout.add_widget(back_btn)
 
-        layout.add_widget(Button(text="Back", on_press=go_home))
         self.add_widget(layout)
+
+    def select_speed(self, instance):
+        App.get_running_app().speed = instance.text  # Save selected speed globally
+        self.manager.current = 'home'  # Return to home screen
+
+    def go_back(self, instance):
+        self.manager.current = 'home'
