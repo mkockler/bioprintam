@@ -7,85 +7,42 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
 
-# Screens (Temperature, Speed, Concentration, etc.)
+# Import screens from other files
+from temp import TemperatureScreen
+from speed import SpeedScreen
+from pressure import PressureScreen
+from start_conc import StartConcScreen
+from end_conc import EndConcScreen
+from volume_s1 import VolumeS1Screen
+from volume_s2 import VolumeS2Screen
+from print_time import PrintTimeScreen
+
 class HomeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
-        layout.add_widget(Label(text="Temperature: 45 °C"))
-        layout.add_widget(Label(text="Set Temp: 50 °C"))
-        layout.add_widget(Label(text="Speed: 1 mm/min"))
-        layout.add_widget(Label(text="Print Time: 60 sec"))
-        layout.add_widget(Label(text="Conc: 0-100%"))
-        layout.add_widget(Label(text="Final Conc: 100%"))
-        layout.add_widget(Label(text="[color=0000FF]Printing...[/color]", markup=True))
+        def nav_button(text, target_screen):
+            return Button(
+                text=text,
+                on_press=lambda x: setattr(self.manager, 'current', target_screen)
+            )
+
+        # clickable buttons
+        layout.add_widget(nav_button("Set Temperature: ", "temperature"))
+        layout.add_widget(nav_button("Set Speed", "speed"))
+        layout.add_widget(nav_button("Set Pressure", "pressure"))
+        layout.add_widget(nav_button("Set Start Conc", "start_conc"))
+        layout.add_widget(nav_button("Set End Conc", "end_conc"))
+        layout.add_widget(nav_button("Set Volume S1", "volume_s1"))
+        layout.add_widget(nav_button("Set Volume S2", "volume_s2"))
+        layout.add_widget(nav_button("Set Print Time", "print_time"))
+
         layout.add_widget(Button(text="Locked", background_color=(0.5, 0.5, 1, 1)))
 
         self.add_widget(layout)
 
-class TemperatureScreen(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        layout = GridLayout(cols=3, spacing=10, padding=10)
-        layout.add_widget(Button(text="-"))
-        layout.add_widget(Label(text="____"))
-        layout.add_widget(Button(text="+"))
 
-        temps = ["20", "37", "40", "45", "50", "55", "60", "65"]
-        for t in temps:
-            layout.add_widget(Button(text=t))
-
-        layout.add_widget(Button(text="Back", on_press=self.go_back))
-        layout.add_widget(Label(text=""))
-        layout.add_widget(Button(text="°C"))
-
-        self.add_widget(layout)
-
-    def go_back(self, instance):
-        self.manager.current = 'home'
-
-# Reusable screen class template
-class SimpleScreen(Screen):
-    def __init__(self, title, button_labels, **kwargs):
-        super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
-        layout.add_widget(Label(text=title, font_size='20sp'))
-
-        grid = GridLayout(cols=3, spacing=10)
-        for label in button_labels:
-            grid.add_widget(Button(text=label))
-        layout.add_widget(grid)
-
-        layout.add_widget(Button(text="Back", on_press=self.go_back))
-        self.add_widget(layout)
-
-    def go_back(self, instance):
-        self.manager.current = 'home'
-
-class SpeedScreen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("Set Speed (mm/min)", ["0.5", "1", "1.5", "2", "2.5", "3"], **kwargs)
-
-class StartConcScreen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("Start Concentration (%)", ["0", "25", "50", "75", "100"], **kwargs)
-
-class EndConcScreen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("End Concentration (%)", ["0", "25", "50", "75", "100"], **kwargs)
-
-class VolumeS1Screen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("Volume S1 (uL)", ["10", "20", "30", "40", "50"], **kwargs)
-
-class VolumeS2Screen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("Volume S2 (uL)", ["10", "20", "30", "40", "50"], **kwargs)
-
-class PrintTimeScreen(SimpleScreen):
-    def __init__(self, **kwargs):
-        super().__init__("Print Time (sec)", ["30", "60", "90", "120"], **kwargs)
 
 class MainApp(App):
     def build(self):
@@ -93,6 +50,7 @@ class MainApp(App):
         sm.add_widget(HomeScreen(name='home'))
         sm.add_widget(TemperatureScreen(name='temperature'))
         sm.add_widget(SpeedScreen(name='speed'))
+        sm.add_widget(PressureScreen(name='pressure'))
         sm.add_widget(StartConcScreen(name='start_conc'))
         sm.add_widget(EndConcScreen(name='end_conc'))
         sm.add_widget(VolumeS1Screen(name='volume_s1'))
