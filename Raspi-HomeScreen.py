@@ -14,16 +14,19 @@ from kivy.uix.gridlayout import GridLayout
 class HomeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=10, spacing=8)
+        layout = BoxLayout(orientation='vertical', padding=15, spacing=10)
 
-        layout.add_widget(Label(text="Temperature: 45 °C", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="Set Temp: 50 °C", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="Speed: 1 mm/min", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="Print Time: 60 sec", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="Conc: 0-100%", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="Final Conc: 100%", font_size='18sp', size_hint_y=0.1))
-        layout.add_widget(Label(text="[color=0000FF]Printing...[/color]", markup=True, font_size='20sp', size_hint_y=0.1))
-        layout.add_widget(Button(text="Locked", background_color=(0.5, 0.5, 1, 1), size_hint_y=0.15, font_size='22sp'))
+        label_height = 30  # px height for each Label
+        btn_height = 50    # px height for the button
+
+        layout.add_widget(Label(text="Temperature: 45 °C", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="Set Temp: 50 °C", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="Speed: 1 mm/min", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="Print Time: 60 sec", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="Conc: 0-100%", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="Final Conc: 100%", font_size='18sp', size_hint_y=None, height=label_height))
+        layout.add_widget(Label(text="[color=0000FF]Printing...[/color]", markup=True, font_size='20sp', size_hint_y=None, height=label_height + 10))
+        layout.add_widget(Button(text="Locked", background_color=(0.5, 0.5, 1, 1), size_hint_y=None, height=btn_height, font_size='22sp'))
 
         self.add_widget(layout)
 
