@@ -6,6 +6,9 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
+from kivy.config import Config
+Config.set('graphics', 'width', '480')   # Set desired width (e.g., 320 px)
+Config.set('graphics', 'height', '320')  # Set desired height (e.g., 240 px)
 
 # Screens (Temperature, Speed, Concentration, etc.)
 class HomeScreen(Screen):
