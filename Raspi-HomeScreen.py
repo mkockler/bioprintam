@@ -1,7 +1,7 @@
 # main.py
 from kivy.config import Config
-Config.set('graphics', 'width', '480')   # Screen width
-Config.set('graphics', 'height', '320')  # Screen height
+Config.set('graphics', 'width', '320')   # portrait width
+Config.set('graphics', 'height', '480')  # portrait height
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
