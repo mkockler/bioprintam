@@ -1,4 +1,4 @@
-port = "/dev/cu.usbmodem2101";  % Arduino port
+port = "/dev/cu.usbmodem2101";  % Arduino port name
 baud = 9600;
 s = serialport(port, baud);
 
@@ -19,7 +19,7 @@ grid on;
 set(gca,'FontSize',14);
 ylim([20 90])
 yticks(20:10:90)
-yline(20:5:90,'Color',[.8 .8 .8],'HandleVisibility','off'); % grid lines
+yline(20:5:90,'Color',[.8 .8 .8],'HandleVisibility','off'); % Grid lines
 legend([h1 h2],'Thermistor 1','Thermistor 2'); 
 
 startTime = tic;
@@ -42,7 +42,7 @@ try
                 set(h2, 'XData', t_data, 'YData', temp2_data);
                 drawnow;
 
-                % --- Periodic save ---
+                % Periodic save
                 if t - lastSaveTime >= saveInterval
                     T = table(t_data', temp1_data', temp2_data', ...
                               'VariableNames', {'Time_s','Temp1_C','Temp2_C'});
