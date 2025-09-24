@@ -1,4 +1,4 @@
-#include <math.h>
+#include <math.h> 
 
 const int numThermistors = 2;
 const int thermistorPins[numThermistors] = {A0, A1};
