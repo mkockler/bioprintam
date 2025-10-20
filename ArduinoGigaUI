@@ -1,0 +1,265 @@
+#include "Arduino_GigaDisplay_GFX.h"
+#include "Arduino_GigaDisplayTouch.h"
+
+GigaDisplay_GFX display;
+Arduino_GigaDisplayTouch touchDetector;
+
+// Page definitions
+enum Page {
+  HOME,
+  TEMPERATURE,
+  VOLUME1,
+  VOLUME2,
+  CONCENTRATION,
+  SPEED
+};
+
+Page currentPage = HOME;
+
+// Parameter storage
+int selectedTemp = -1;
+int selectedVol1 = -1;
+int selectedVol2 = -1;
+int selectedConc = -1;
+int selectedSpeed = -1;
+
+// Temporary selection (before confirmation)
+int tempSelection = -1;
+
+// Temperature options
+int tempOptions[] = {32, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80};
+int numTempOptions = 11;
+
+// Concentration options
+int concOptions[] = {0, 25, 50, 75, 100};
+int numConcOptions = 5;
+
+// Volume options (1-10)
+int volOptions[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+int numVolOptions = 10;
+
+// Speed options (1-5)
+int speedOptions[] = {1, 2, 3, 4, 5};
+int numSpeedOptions = 5;
+
+// Colors
+#define BG_COLOR 0x000F
+#define BUTTON_COLOR 0x4A49
+#define BUTTON_SELECTED_COLOR 0x2104
+#define TEXT_COLOR 0xFFFF
+#define CONFIRM_COLOR 0x07E0
+
+// Touch handling
+bool lastTouchState = false;
+
+void setup() {
+  Serial.begin(9600);
+  display.begin();
+  touchDetector.begin();
+  display.fillScreen(BG_COLOR);
+  drawHomePage();
+}
+
+void loop() {
+  // Check for touch using the touch detector
+  uint8_t contacts;
+  GDTpoint_t points[5];
+  
+  contacts = touchDetector.getTouchPoints(points);
+  
+  if (contacts > 0 && !lastTouchState) {
+    // New touch detected
+    int x = points[0].x;
+    int y = points[0].y;
+    handleTouch(x, y);
+    lastTouchState = true;
+    delay(200); // Debounce
+  } else if (contacts == 0) {
+    lastTouchState = false;
+  }
+  
+  delay(10);
+}
+
+void handleTouch(int x, int y) {
+  switch (currentPage) {
+    case HOME:
+      handleHomeTouch(x, y);
+      break;
+    case TEMPERATURE:
+      handleParameterTouch(x, y, tempOptions, numTempOptions, &selectedTemp);
+      break;
+    case VOLUME1:
+      handleParameterTouch(x, y, volOptions, numVolOptions, &selectedVol1);
+      break;
+    case VOLUME2:
+      handleParameterTouch(x, y, volOptions, numVolOptions, &selectedVol2);
+      break;
+    case CONCENTRATION:
+      handleParameterTouch(x, y, concOptions, numConcOptions, &selectedConc);
+      break;
+    case SPEED:
+      handleParameterTouch(x, y, speedOptions, numSpeedOptions, &selectedSpeed);
+      break;
+  }
+}
+
+void drawHomePage() {
+  display.fillScreen(BG_COLOR);
+  display.setTextColor(TEXT_COLOR);
+  display.setTextSize(2);
+  display.setCursor(250, 20);
+  display.print("PARAMETER CONTROL");
+  
+  // Draw parameter buttons with status
+  drawHomeButton(50, 80, "Temperature", selectedTemp, "C");
+  drawHomeButton(50, 150, "Volume 1", selectedVol1, "mL");
+  drawHomeButton(50, 220, "Volume 2", selectedVol2, "mL");
+  drawHomeButton(50, 290, "Concentration", selectedConc, "%");
+  drawHomeButton(50, 360, "Speed", selectedSpeed, "mL/min");
+}
+
+void drawHomeButton(int x, int y, const char* label, int value, const char* unit) {
+  // Draw button
+  display.fillRoundRect(x, y, 200, 50, 5, BUTTON_COLOR);
+  display.setTextSize(2);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(x + 10, y + 17);
+  display.print(label);
+  
+  // Draw status
+  display.setCursor(x + 220, y + 17);
+  if (value == -1) {
+    display.print("Not Selected");
+  } else {
+    display.print("Selected: ");
+    display.print(value);
+    if (unit[0] == 'C') {
+      display.print((char)247); // Degree symbol
+    }
+    display.print(unit);
+  }
+}
+
+void handleHomeTouch(int x, int y) {
+  if (x >= 50 && x <= 250) {
+    if (y >= 80 && y <= 130) {
+      currentPage = TEMPERATURE;
+      tempSelection = selectedTemp;
+      drawParameterPage("Temperature", tempOptions, numTempOptions, "C");
+    } else if (y >= 150 && y <= 200) {
+      currentPage = VOLUME1;
+      tempSelection = selectedVol1;
+      drawParameterPage("Volume 1", volOptions, numVolOptions, "mL");
+    } else if (y >= 220 && y <= 270) {
+      currentPage = VOLUME2;
+      tempSelection = selectedVol2;
+      drawParameterPage("Volume 2", volOptions, numVolOptions, "mL");
+    } else if (y >= 290 && y <= 340) {
+      currentPage = CONCENTRATION;
+      tempSelection = selectedConc;
+      drawParameterPage("Concentration", concOptions, numConcOptions, "%");
+    } else if (y >= 360 && y <= 410) {
+      currentPage = SPEED;
+      tempSelection = selectedSpeed;
+      drawParameterPage("Speed", speedOptions, numSpeedOptions, "mL/min");
+    }
+  }
+}
+
+void drawParameterPage(const char* title, int* options, int numOptions, const char* unit) {
+  display.fillScreen(BG_COLOR);
+  display.setTextColor(TEXT_COLOR);
+  display.setTextSize(2);
+  display.setCursor(200, 20);
+  display.print("Select ");
+  display.print(title);
+  
+  // Draw option buttons in a grid
+  int cols = (numOptions <= 5) ? numOptions : 5;
+  int rows = (numOptions + cols - 1) / cols;
+  int buttonWidth = 100;
+  int buttonHeight = 60;
+  int spacing = 20;
+  int startX = (800 - (cols * buttonWidth + (cols - 1) * spacing)) / 2;
+  int startY = 100;
+  
+  for (int i = 0; i < numOptions; i++) {
+    int row = i / cols;
+    int col = i % cols;
+    int bx = startX + col * (buttonWidth + spacing);
+    int by = startY + row * (buttonHeight + spacing);
+    
+    bool isSelected = (options[i] == tempSelection);
+    uint16_t color = isSelected ? BUTTON_SELECTED_COLOR : BUTTON_COLOR;
+    
+    display.fillRoundRect(bx, by, buttonWidth, buttonHeight, 5, color);
+    display.setTextSize(2);
+    display.setTextColor(TEXT_COLOR);
+    
+    String valueStr = String(options[i]);
+    int textWidth = valueStr.length() * 12;
+    display.setCursor(bx + (buttonWidth - textWidth) / 2, by + 22);
+    display.print(options[i]);
+  }
+  
+  // Draw confirm button
+  display.fillRoundRect(300, 400, 200, 60, 5, CONFIRM_COLOR);
+  display.setTextSize(3);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(340, 420);
+  display.print("CONFIRM");
+}
+
+void handleParameterTouch(int x, int y, int* options, int numOptions, int* selectedParam) {
+  // Check confirm button
+  if (x >= 300 && x <= 500 && y >= 400 && y <= 460) {
+    if (tempSelection != -1) {
+      *selectedParam = tempSelection;
+    }
+    currentPage = HOME;
+    drawHomePage();
+    return;
+  }
+  
+  // Check option buttons
+  int cols = (numOptions <= 5) ? numOptions : 5;
+  int buttonWidth = 100;
+  int buttonHeight = 60;
+  int spacing = 20;
+  int startX = (800 - (cols * buttonWidth + (cols - 1) * spacing)) / 2;
+  int startY = 100;
+  
+  for (int i = 0; i < numOptions; i++) {
+    int row = i / cols;
+    int col = i % cols;
+    int bx = startX + col * (buttonWidth + spacing);
+    int by = startY + row * (buttonHeight + spacing);
+    
+    if (x >= bx && x <= bx + buttonWidth && y >= by && y <= by + buttonHeight) {
+      tempSelection = options[i];
+      
+      // Redraw to show selection
+      const char* title = "";
+      const char* unit = "";
+      if (currentPage == TEMPERATURE) {
+        title = "Temperature";
+        unit = "C";
+      } else if (currentPage == VOLUME1) {
+        title = "Volume 1";
+        unit = "mL";
+      } else if (currentPage == VOLUME2) {
+        title = "Volume 2";
+        unit = "mL";
+      } else if (currentPage == CONCENTRATION) {
+        title = "Concentration";
+        unit = "%";
+      } else if (currentPage == SPEED) {
+        title = "Speed";
+        unit = "mL/min";
+      }
+      drawParameterPage(title, options, numOptions, unit);
+      break;
+    }
+  }
+}
