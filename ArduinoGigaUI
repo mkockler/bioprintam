@@ -11,7 +11,8 @@ enum Page {
   VOLUME1,
   VOLUME2,
   CONCENTRATION,
-  SPEED
+  SPEED,
+  PRINT
 };
 
 Page currentPage = HOME;
@@ -43,11 +44,12 @@ int speedOptions[] = {1, 2, 3, 4, 5};
 int numSpeedOptions = 5;
 
 // Colors
-#define BG_COLOR 0x0000
-#define BUTTON_COLOR 0x4A49
-#define BUTTON_SELECTED_COLOR 0x2104
-#define TEXT_COLOR 0xFFFF
-#define CONFIRM_COLOR 0x07E0
+#define BG_COLOR 0x0010        // Darker blue
+#define BUTTON_COLOR 0xFFFF    // White
+#define BUTTON_SELECTED_COLOR 0xC618  // Light grey
+#define TEXT_COLOR 0xFFFF      // White
+#define BUTTON_TEXT_COLOR 0x0010  // Dark blue (for text inside buttons)
+#define CONFIRM_COLOR 0xA9CF   // Soft ballet pink
 
 // Touch handling
 bool lastTouchState = false;
@@ -109,14 +111,17 @@ void handleTouch(int x, int y) {
     case SPEED:
       handleParameterTouch(x, y, speedOptions, numSpeedOptions, &selectedSpeed);
       break;
+    case PRINT:
+      handlePrintTouch(x, y);
+      break;
   }
 }
 
 void drawHomePage() {
   display.fillScreen(BG_COLOR);
   display.setTextColor(TEXT_COLOR);
-  display.setTextSize(2);
-  display.setCursor(100, 30);
+  display.setTextSize(4);
+  display.setCursor(45, 30);
   display.print("PARAMETER CONTROL");
   
   // Draw parameter buttons vertically stacked - portrait 480x800
@@ -125,27 +130,46 @@ void drawHomePage() {
   drawHomeButton(40, 320, "Volume 2", selectedVol2, "mL");
   drawHomeButton(40, 430, "Concentration", selectedConc, "%");
   drawHomeButton(40, 540, "Speed", selectedSpeed, "mL/min");
+  
+  // Draw PRINT button at bottom
+  display.fillRoundRect(140, 680, 200, 80, 8, CONFIRM_COLOR);
+  display.setTextSize(3);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(195, 710);
+  display.print("PRINT");
 }
 
 void drawHomeButton(int x, int y, const char* label, int value, const char* unit) {
   // Draw button
   display.fillRoundRect(x, y, 400, 90, 8, BUTTON_COLOR);
   display.setTextSize(2);
-  display.setTextColor(TEXT_COLOR);
-  display.setCursor(x + 15, y + 20);
+  display.setTextColor(BUTTON_TEXT_COLOR);
+  display.setCursor(x + 15, y + 15);
   display.print(label);
   
   // Draw status below label
+  display.setTextSize(2);
   display.setCursor(x + 15, y + 50);
   if (value == -1) {
     display.print("Not Selected");
   } else {
     display.print("Selected: ");
-    display.print(value);
-    if (unit[0] == 'C') {
-      display.print((char)247); // Degree symbol
+    
+    // Special formatting for concentration
+    if (unit[0] == '%') {
+      int inverse = 100 - value;
+      display.print(value);
+      display.print(":");
+      display.print(inverse);
+      display.print("%");
+    } else {
+      display.print(value);
+      display.print(" ");
+      if (unit[0] == 'C') {
+        display.print((char)247); // Degree symbol
+      }
+      display.print(unit);
     }
-    display.print(unit);
   }
 }
 
@@ -154,15 +178,15 @@ void handleHomeTouch(int x, int y) {
     if (y >= 100 && y <= 190) {
       currentPage = TEMPERATURE;
       tempSelection = selectedTemp;
-      drawParameterPage("Temperature", tempOptions, numTempOptions, "-C");
+      drawParameterPage("Temperature", tempOptions, numTempOptions, "C");
     } else if (y >= 210 && y <= 300) {
       currentPage = VOLUME1;
       tempSelection = selectedVol1;
-      drawParameterPage("Volume 1", volOptions, numVolOptions, " mL");
+      drawParameterPage("Volume 1", volOptions, numVolOptions, "mL");
     } else if (y >= 320 && y <= 410) {
       currentPage = VOLUME2;
       tempSelection = selectedVol2;
-      drawParameterPage("Volume 2", volOptions, numVolOptions, " mL");
+      drawParameterPage("Volume 2", volOptions, numVolOptions, "mL");
     } else if (y >= 430 && y <= 520) {
       currentPage = CONCENTRATION;
       tempSelection = selectedConc;
@@ -170,18 +194,25 @@ void handleHomeTouch(int x, int y) {
     } else if (y >= 540 && y <= 630) {
       currentPage = SPEED;
       tempSelection = selectedSpeed;
-      drawParameterPage("Speed", speedOptions, numSpeedOptions, " mL/min");
+      drawParameterPage("Speed", speedOptions, numSpeedOptions, "mL/min");
     }
+  }
+  
+  // Check PRINT button
+  if (x >= 140 && x <= 340 && y >= 680 && y <= 760) {
+    currentPage = PRINT;
+    drawPrintPage();
   }
 }
 
 void drawParameterPage(const char* title, int* options, int numOptions, const char* unit) {
   display.fillScreen(BG_COLOR);
   display.setTextColor(TEXT_COLOR);
-  display.setTextSize(2);
+  display.setTextSize(3);
   display.setCursor(50, 30);
   display.print("Select ");
   display.print(title);
+  display.print(":");
   
   // Draw option buttons - 3 columns for portrait
   int cols = 3;
@@ -199,11 +230,11 @@ void drawParameterPage(const char* title, int* options, int numOptions, const ch
     int by = startY + row * (buttonHeight + spacingY);
     
     bool isSelected = (options[i] == tempSelection);
-    uint16_t color = isSelected ? BUTTON_SELECTED_COLOR : BUTTON_COLOR;
+    uint16_t bgColor = isSelected ? BUTTON_SELECTED_COLOR : BUTTON_COLOR;
     
-    display.fillRoundRect(bx, by, buttonWidth, buttonHeight, 8, color);
+    display.fillRoundRect(bx, by, buttonWidth, buttonHeight, 8, bgColor);
     display.setTextSize(3);
-    display.setTextColor(TEXT_COLOR);
+    display.setTextColor(BUTTON_TEXT_COLOR);
     
     // Center text in button
     String valueStr = String(options[i]);
@@ -222,6 +253,44 @@ void drawParameterPage(const char* title, int* options, int numOptions, const ch
   display.setTextColor(TEXT_COLOR);
   display.setCursor(200, 725);
   display.print("CONFIRM");
+}
+
+void drawPrintPage() {
+  display.fillScreen(0xFFFF); // White background: 0xFFFF
+  
+  // Create a colored box behind the text for better visibility
+  // display.fillRoundRect(70, 320, 340, 100, 10, BG_COLOR);
+  
+  // Rainbow colored "Loading..." text
+  const char* text = "Loading...";
+  int textLen = strlen(text);
+  uint16_t colors[] = {0xA9CF, 0xA9CF, 0xA9CF, 0xA9CF, 0xA9CF, 0xA9CF};
+  // {0xF800, 0xFD20, 0xFFE0, 0x07E0, 0x07FF, 0xF81F}; // Brighter rainbow colors
+  
+  display.setTextSize(4);
+  int startX = 100;
+  int startY = 350;
+  
+  for (int i = 0; i < textLen; i++) {
+    display.setTextColor(colors[i % 6]);
+    display.setCursor(startX + (i * 24), startY);
+    display.print(text[i]);
+  }
+  
+  // Draw HOME button at bottom
+  display.fillRoundRect(140, 680, 200, 80, 8, CONFIRM_COLOR);
+  display.setTextSize(3);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(195, 710);
+  display.print("HOME");
+}
+
+void handlePrintTouch(int x, int y) {
+  // Check HOME button
+  if (x >= 140 && x <= 340 && y >= 680 && y <= 760) {
+    currentPage = HOME;
+    drawHomePage();
+  }
 }
 
 void handleParameterTouch(int x, int y, int* options, int numOptions, int* selectedParam) {
