@@ -12,6 +12,7 @@ enum Page {
   VOLUME2,
   CONCENTRATION,
   SPEED,
+  PRINT_CONFIRM,
   PRINT
 };
 
@@ -50,6 +51,7 @@ int numSpeedOptions = 5;
 #define TEXT_COLOR 0xFFFF      // White
 #define BUTTON_TEXT_COLOR 0x0010  // Dark blue (for text inside buttons)
 #define CONFIRM_COLOR 0xA9CF   // Soft ballet pink
+#define CANCEL_COLOR 0xF800    // Red
 
 // Touch handling
 bool lastTouchState = false;
@@ -110,6 +112,9 @@ void handleTouch(int x, int y) {
       break;
     case SPEED:
       handleParameterTouch(x, y, speedOptions, numSpeedOptions, &selectedSpeed);
+      break;
+    case PRINT_CONFIRM:
+      handlePrintConfirmTouch(x, y);
       break;
     case PRINT:
       handlePrintTouch(x, y);
@@ -200,8 +205,8 @@ void handleHomeTouch(int x, int y) {
   
   // Check PRINT button
   if (x >= 140 && x <= 340 && y >= 680 && y <= 760) {
-    currentPage = PRINT;
-    drawPrintPage();
+    currentPage = PRINT_CONFIRM;
+    drawPrintConfirmPage();
   }
 }
 
@@ -214,6 +219,38 @@ void drawParameterPage(const char* title, int* options, int numOptions, const ch
   display.print(title);
   display.print(":");
   
+  // Draw white display box showing current selection
+  display.fillRoundRect(40, 80, 400, 70, 8, BUTTON_COLOR);
+  display.setTextSize(3);
+  display.setTextColor(BUTTON_TEXT_COLOR);
+  
+  // Display current selection in the box
+  if (tempSelection == -1) {
+    display.setCursor(120, 105);
+    display.print("Not Selected");
+  } else {
+    String valueStr = "";
+    
+    // Special formatting for concentration
+    if (unit[0] == '%') {
+      int inverse = 100 - tempSelection;
+      valueStr = String(tempSelection) + ":" + String(inverse) + "%";
+    } else {
+      valueStr = String(tempSelection) + " ";
+      if (unit[0] == 'C') {
+        valueStr += (char)247; // Degree symbol
+      }
+      valueStr += unit;
+    }
+    
+    // Center the text in the box
+    int charCount = valueStr.length();
+    int textWidth = charCount * 18;
+    int textX = 240 - (textWidth / 2);
+    display.setCursor(textX, 105);
+    display.print(valueStr);
+  }
+  
   // Draw option buttons - 3 columns for portrait
   int cols = 3;
   int buttonWidth = 120;
@@ -221,7 +258,7 @@ void drawParameterPage(const char* title, int* options, int numOptions, const ch
   int spacingX = 20;
   int spacingY = 20;
   int startX = 40;
-  int startY = 100;
+  int startY = 180;
   
   for (int i = 0; i < numOptions; i++) {
     int row = i / cols;
@@ -253,6 +290,93 @@ void drawParameterPage(const char* title, int* options, int numOptions, const ch
   display.setTextColor(TEXT_COLOR);
   display.setCursor(200, 725);
   display.print("CONFIRM");
+}
+
+void drawPrintConfirmPage() {
+  display.fillScreen(BG_COLOR);
+  display.setTextColor(TEXT_COLOR);
+  display.setTextSize(3);
+  display.setCursor(100, 30);
+  display.print("Begin Loading?");
+  
+  // Draw parameter summary
+  int yPos = 100;
+  int lineHeight = 70;
+  
+  // Temperature
+  drawParameterSummary(40, yPos, "Temperature:", selectedTemp, "C");
+  yPos += lineHeight;
+  
+  // Volume 1
+  drawParameterSummary(40, yPos, "Volume 1:", selectedVol1, "mL");
+  yPos += lineHeight;
+  
+  // Volume 2
+  drawParameterSummary(40, yPos, "Volume 2:", selectedVol2, "mL");
+  yPos += lineHeight;
+  
+  // Concentration
+  drawParameterSummary(40, yPos, "Concentration:", selectedConc, "%");
+  yPos += lineHeight;
+  
+  // Speed
+  drawParameterSummary(40, yPos, "Speed:", selectedSpeed, "mL/min");
+  
+  // Draw CONFIRM button
+  display.fillRoundRect(60, 650, 160, 80, 8, CONFIRM_COLOR);
+  display.setTextSize(2);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(100, 680);
+  display.print("CONFIRM");
+  
+  // Draw CANCEL button
+  display.fillRoundRect(260, 650, 160, 80, 8, CANCEL_COLOR);
+  display.setTextSize(2);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(305, 680);
+  display.print("CANCEL");
+}
+
+void drawParameterSummary(int x, int y, const char* label, int value, const char* unit) {
+  display.setTextSize(3);
+  display.setTextColor(TEXT_COLOR);
+  display.setCursor(x, y);
+  display.print(label);
+  
+  display.setCursor(x, y + 30);
+  if (value == -1) {
+    display.print("Not Selected");
+  } else {
+    // Special formatting for concentration
+    if (unit[0] == '%') {
+      int inverse = 100 - value;
+      display.print(value);
+      display.print(":");
+      display.print(inverse);
+      display.print("%");
+    } else {
+      display.print(value);
+      display.print(" ");
+      if (unit[0] == 'C') {
+        display.print((char)247); // Degree symbol
+      }
+      display.print(unit);
+    }
+  }
+}
+
+void handlePrintConfirmTouch(int x, int y) {
+  // Check CONFIRM button
+  if (x >= 60 && x <= 220 && y >= 650 && y <= 730) {
+    currentPage = PRINT;
+    drawPrintPage();
+  }
+  
+  // Check CANCEL button
+  if (x >= 260 && x <= 420 && y >= 650 && y <= 730) {
+    currentPage = HOME;
+    drawHomePage();
+  }
 }
 
 void drawPrintPage() {
@@ -311,7 +435,7 @@ void handleParameterTouch(int x, int y, int* options, int numOptions, int* selec
   int spacingX = 20;
   int spacingY = 20;
   int startX = 40;
-  int startY = 100;
+  int startY = 180;
   
   for (int i = 0; i < numOptions; i++) {
     int row = i / cols;
