@@ -204,6 +204,13 @@ struct SystemConfig {
   long prime_pos2 = LOAD_POSITION;
 } config;
 
+// Extrusion validation structure
+struct ExtrusionValidation {
+  bool is_valid;
+  String error_message;
+  String suggestion;
+};
+
 // UI options
 int tempOptions[] = {30, 32, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80};
 int numTempOptions = 12;
@@ -756,12 +763,6 @@ bool executePrime() {
 }
 
 // ==================== EXTRUSION VALIDATION ====================
-struct ExtrusionValidation {
-  bool is_valid;
-  String error_message;
-  String suggestion;
-};
-
 ExtrusionValidation validateExtrusion(float total_volume_ml, float print_time_sec) {
   ExtrusionValidation result;
   result.is_valid = true;
